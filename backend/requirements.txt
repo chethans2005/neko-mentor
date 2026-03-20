@@ -1,0 +1,22 @@
+fastapi
+uvicorn
+pydantic
+python-dotenv
+
+# LLM
+openai
+
+# Scraping
+requests
+beautifulsoup4
+duckduckgo-search
+
+# Vector fallback
+faiss-cpu
+numpy
+
+# Utils
+tqdm
+
+# Optional (better parsing)
+lxml

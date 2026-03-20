@@ -1,0 +1,11 @@
+{
+  "System Design": {
+    "Components": {
+      "Cache": {
+        "overview": "",
+        "eviction": "",
+        "invalidation": ""
+      }
+    }
+  }
+}
