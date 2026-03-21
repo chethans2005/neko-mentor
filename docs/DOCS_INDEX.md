@@ -159,10 +159,9 @@ python backend/src/main.py
 ### For Production Deployment (2 hours)
 1. Read: **QUICKSTART.md**
 2. Read: **BACKEND_README.md** (Setup section)
-3. Read: **DOCKER.md**
-4. Configure `.env`
-5. Run: `python backend/tests/setup_check.py`
-6. Deploy: `docker-compose up`
+3. Configure `.env`
+4. Run: `python backend/tests/setup_check.py`
+5. Deploy: `python backend/src/main.py`
 
 ### For Deep Understanding (4 hours)
 1. Read: **IMPLEMENTATION_SUMMARY.md**
@@ -247,7 +246,7 @@ vectorless/
 │   ├── IMPLEMENTATION_SUMMARY.md   # Overview
 │   ├── BACKEND_README.md           # Complete reference
 │   ├── ARCHITECTURE.md             # Deep dive
-│   ├── DOCKER.md                   # Deployment
+ │   ├── DOCKER.md                   # Deployment (deprecated)
 │   └── README.md                   # Original README
 │
 └── Data
@@ -263,7 +262,7 @@ vectorless/
 - **Fast questions?** → QUICKSTART.md
 - **API help?** → BACKEND_README.md (API section)
 - **Architecture questions?** → ARCHITECTURE.md
-- **Deployment?** → DOCKER.md
+- **Deployment?** → Run `python backend/src/main.py` (no Docker)
 - **Overall understanding?** → IMPLEMENTATION_SUMMARY.md
 
 - ### Tools
@@ -299,7 +298,7 @@ vectorless/
 1. **I want to get started now** → Read QUICKSTART.md (5 min)
 2. **I want to understand everything** → Read IMPLEMENTATION_SUMMARY.md (10 min)
 3. **I want to use the API** → Read BACKEND_README.md API section (10 min)
-4. **I want to deploy** → Read DOCKER.md (10 min)
+4. **I want to deploy** → Run the server directly: `python backend/src/main.py` (no Docker)
 5. **I want to understand the code** → Read ARCHITECTURE.md (45 min)
 
 ---

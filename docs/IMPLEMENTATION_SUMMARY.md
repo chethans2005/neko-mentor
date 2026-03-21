@@ -284,9 +284,9 @@ python backend/src/main.py
 #   -d '{"query": "Your question?"}'
 ```
 
-### Option 3: Docker
+### Option 3: Run Server (no Docker)
 ```bash
-docker-compose up
+python backend/src/main.py
 # Same API as above
 ```
 
@@ -418,7 +418,7 @@ These can be added as needed for production deployment.
 - `QUICKSTART.md` — Fast start
 - `BACKEND_README.md` — Complete reference
 - `ARCHITECTURE.md` — Deep dive
-- `DOCKER.md` — Deployment
+`DOCKER.md` — Deployment (deprecated)
 
 **Validation**:
 - `setup_check.py` — Verify setup

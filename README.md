@@ -52,7 +52,7 @@ vectorless/
 │   ├── BACKEND_README.md       # Full API reference
 │   ├── ARCHITECTURE.md         # Technical details
 │   ├── IMPLEMENTATION_SUMMARY.md
-│   ├── DOCKER.md              # Docker deployment
+│   ├── DOCKER.md              # Docker deployment (removed)
 │   ├── DOCS_INDEX.md          # Documentation index
 │   ├── DELIVERY_SUMMARY.md    # Project summary
 │   └── README.md              # Documentation home
@@ -86,7 +86,7 @@ Start with the **docs/** folder:
 - **Query Caching**: In-memory response caching for performance
 - **FastAPI Server**: REST API with comprehensive endpoints
 - **Testing Tools**: CLI test, setup validator, and unit tests
-- **Docker Ready**: Containerization support for deployment
+ - **No Docker Required**: Run the server directly without Docker
 
 ## How It Works
 │   ├── (no Docker)            # Docker removed per user preference
@@ -213,21 +213,19 @@ python backend/tests/setup_check.py
 python backend/tests/cli_test.py "Your question"
 ```
 
-## Deployment
+## Deployment (no Docker)
 
-### Docker
+Run the FastAPI server directly:
+
 ```bash
-# Build
-docker build -t vectorless .
-
-# Run
-docker run -p 8000:8000 \
-  -e LLM_PROVIDER=groq \
-  -e GROQ_API_KEY=your_key \
-  vectorless
+python backend/src/main.py
 ```
 
-See [docs/DOCKER.md](docs/DOCKER.md) for details.
+Or use the CLI for quick queries:
+
+```bash
+python backend/tests/cli_test.py "Your question"
+```
 
 ## Knowledge Base
 

@@ -15,7 +15,7 @@ Start with these files in order:
 
 - **ARCHITECTURE.md** (45 min) — Technical deep dive into system design
 - **IMPLEMENTATION_SUMMARY.md** — What was built and why
-- **DOCKER.md** — Docker deployment guide
+-- **DOCKER.md** — Docker deployment guide (deprecated)
 - **DELIVERY_SUMMARY.md** — Project delivery overview
 
 ## Quick Links

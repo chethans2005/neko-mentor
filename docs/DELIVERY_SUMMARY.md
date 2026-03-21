@@ -169,15 +169,7 @@ A production-ready Python backend for the Vectorless System Design Assistant fea
      • Security considerations
      • Future enhancements
 
-✓ DOCKER.md (150 lines)
-  └─ Docker deployment guide
-     • Dockerfile
-     • docker-compose.yml
-     • Build & run instructions
-     • Environment configuration
-     • Volume management
-     • Scaling strategies
-     • Troubleshooting
+✓ DOCKER.md (150 lines) (deprecated - Docker deployment guide removed)
 ```
 
 ### Additional Files (2 files)
@@ -338,11 +330,11 @@ python backend/tests/cli_test.py "Your question?" --debug
 ```
 → See exact traversal path and scoring logic
 
-### ✅ Deploy to Production
+### ✅ Deploy to Production (no Docker)
 ```bash
-docker-compose up
+python backend/src/main.py
 ```
-→ Containerized Ollama + FastAPI ready for cloud
+→ FastAPI server ready on localhost:8000
 
 ### ✅ Validate Setup
 ```bash
@@ -372,7 +364,7 @@ Start with ONE of these based on your goal:
 → Read: `BACKEND_README.md`
 
 **I want to deploy it** (1 hour)
-→ Read: `DOCKER.md`
+→ Deployment: run `python backend/src/main.py` (no Docker)
 
 **I want to understand the architecture** (1-2 hours)
 → Read: `ARCHITECTURE.md`
@@ -525,7 +517,7 @@ python backend/tests/cli_test.py "What are microservices?"
 1. **Setup**: `cp backend/config/.env.example backend/config/.env`
 2. **Verify**: `python backend/tests/setup_check.py`
 3. **Test**: `python backend/tests/cli_test.py "Your question?"`
-4. **Deploy**: `python backend/src/main.py` or `docker-compose up`
+4. **Deploy**: `python backend/src/main.py`
 5. **Integrate**: Use REST API in your application
 
 ---
@@ -537,7 +529,7 @@ python backend/tests/cli_test.py "What are microservices?"
 | Where do I start? | Read `GETTING_STARTED.md` |
 | Can't get setup? | Read `QUICKSTART.md` |
 | How to use API? | Read `BACKEND_README.md` |
-| Deployment help? | Read `DOCKER.md` |
+| Deployment help? | Run `python backend/src/main.py` (no Docker) |
 | Technical details? | Read `ARCHITECTURE.md` |
 | Navigation help? | Read `DOCS_INDEX.md` |
 
@@ -560,7 +552,7 @@ You now have a **complete, production-ready backend** for the Vectorless System 
 ### Ready to Use
 ✅ Test immediately: `python backend/tests/cli_test.py "question?"`  
 ✅ Run server: `python backend/src/main.py`  
-✅ Deploy: `docker-compose up`  
+✅ Deploy: `python backend/src/main.py`  
 
 ### No Vectors Needed
 ✅ Pure tree traversal  

@@ -23,7 +23,7 @@ Congratulations! Your **Vectorless System Design Assistant Backend** is now full
 - **IMPLEMENTATION_SUMMARY.md** — What was built
 - **BACKEND_README.md** — Complete reference
 - **ARCHITECTURE.md** — Deep technical dive
-- **DOCKER.md** — Container deployment
+- **DOCKER.md** — Container deployment (deprecated)
 - **DOCS_INDEX.md** — Navigation guide
 
 ### ✅ Configuration (2 files)
@@ -60,10 +60,10 @@ curl -X POST "http://localhost:8000/query" \
    -d '{"query": "How does consistent hashing work?"}'
 ```
 
-### Option 3: Docker (10 minutes)
+### Option 3: Run Server (no Docker)
 
 ```bash
-# Run the server directly (no Docker):
+# Run the server directly:
 python backend/src/main.py
 
 # Test the API (in another terminal):
@@ -101,8 +101,7 @@ curl -X POST "http://localhost:8000/query" \
 4. Test: Use curl or Postman
 
 ### "I want to deploy to production" (1 hour)
-1. Read: `DOCKER.md`
-2. Run: `docker-compose up`
+1. Deployment: run `python backend/src/main.py` (no Docker)
 3. Configure: Environment variables
 4. Deploy: To cloud/server
 
@@ -123,7 +122,7 @@ curl -X POST "http://localhost:8000/query" \
 | **DOCS_INDEX.md** | Navigation guide | 5 min |
 | **BACKEND_README.md** | Complete reference | 30 min |
 | **ARCHITECTURE.md** | Technical deep dive | 45 min |
-| **DOCKER.md** | Container deployment | 10 min |
+| **DOCKER.md** | Container deployment (deprecated) | 10 min |
 
 **Start here:** `QUICKSTART.md` or `IMPLEMENTATION_SUMMARY.md`
 
@@ -273,7 +272,7 @@ Response: {answer, path, confidence, latency}
 1. **Quick help** → Read `QUICKSTART.md`
 2. **API questions** → Read `BACKEND_README.md`
 3. **Technical questions** → Read `ARCHITECTURE.md`
-4. **Deployment** → Read `DOCKER.md`
+4. **Deployment** → Run `python backend/src/main.py` (no Docker)
 5. **Check setup** → Run `python backend/tests/setup_check.py`
 6. **Run tests** → Run `python backend/tests/test_modules.py`
 7. **Debug** → Run with `--debug` flag
@@ -297,7 +296,7 @@ Congratulations! You have a fully functional **Vectorless System Design Assistan
 
 1. **Validate**: `python backend/tests/setup_check.py`
 2. **Test**: `python backend/tests/cli_test.py "Your question?"`
-3. **Deploy**: `python backend/src/main.py` or `docker-compose up`
+3. **Deploy**: `python backend/src/main.py`
 4. **Integrate**: Use the REST API in your application
 
 ---
@@ -308,7 +307,7 @@ Congratulations! You have a fully functional **Vectorless System Design Assistan
 - 📗 **IMPLEMENTATION_SUMMARY.md** — What was built (10 min)
 - 📙 **BACKEND_README.md** — Complete reference (30 min)
 - 📕 **ARCHITECTURE.md** — Technical deep dive (45 min)
-- 🐳 **DOCKER.md** — Container deployment (10 min)
+- 🐳 **DOCKER.md** — Container deployment (deprecated)
 - 🗺️ **DOCS_INDEX.md** — Navigation guide (5 min)
 
 ---

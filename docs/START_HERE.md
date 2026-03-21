@@ -296,8 +296,11 @@ That's it. The system is production-ready.
 - Run: `cli_test.py --debug` to trace execution
 
 ### Option 3: Deploy to Production (1 hour)
-- Read: `DOCKER.md`
-- Run: `docker-compose up`
+- Run the server directly (no Docker):
+
+```bash
+python backend/src/main.py
+```
 - Integrate: Use the REST API
 
 ### Option 4: Deep Dive (2+ hours)
