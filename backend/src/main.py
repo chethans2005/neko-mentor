@@ -21,6 +21,8 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 
 from llm import call_llm
+from logging_config import configure_logging
+from middleware import register_tracing
 from query_analyzer import analyze_query
 from navigator import navigate_tree, compute_confidence
 from answer_generator import generate_answer, extract_excerpt
@@ -48,6 +50,12 @@ app = FastAPI(
     description="Tree-based knowledge base navigation with LLM guidance",
     version="1.0.0",
 )
+
+# Initialize structured logging
+configure_logging()
+
+# Register tracing middleware (adds X-Request-ID and request logs)
+register_tracing(app)
 
 # Enable CORS
 app.add_middleware(

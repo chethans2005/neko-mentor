@@ -8,6 +8,7 @@ Provides a simple interface:
 import json
 import os
 from dotenv import load_dotenv
+import secrets_manager
 from typing import Optional, Literal
 import requests
 from groq import Groq as GroqClient
@@ -31,10 +32,9 @@ for _p in _ENV_PATHS:
         pass
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-DEFAULT_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")
+DEFAULT_PROVIDER = os.getenv("LLM_PROVIDER", "groq")
 DEFAULT_MODEL_OLLAMA = os.getenv("OLLAMA_MODEL", "llama3.1")
-DEFAULT_MODEL_GROQ = os.getenv("GROQ_MODEL", "mixtral-8x7b-32768")
+DEFAULT_MODEL_GROQ = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
 
 # ============================================================================
@@ -97,20 +97,28 @@ def call_groq(prompt: str, model: str = DEFAULT_MODEL_GROQ) -> str:
     Raises:
         RuntimeError: If GROQ_API_KEY is not set or API call fails.
     """
-    if not GROQ_API_KEY:
-        raise RuntimeError(
-            "GROQ_API_KEY environment variable not set. "
-            "Set it or use provider='ollama'."
-        )
-    
+    # Retrieve API key from secret provider (env or backend/config/.env)
+    api_key = secrets_manager.get_secret("GROQ_API_KEY", required=True)
     try:
-        client = GroqClient(api_key=GROQ_API_KEY)
-        message = client.messages.create(
+        client = GroqClient(api_key=api_key)
+        # Use the Chat Completions endpoint available on the Groq client
+        resp = client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=2048,
+            temperature=0.0,
+            max_completion_tokens=2048,
         )
-        return message.content[0].text.strip()
+
+        # Defensive extraction of the returned text
+        try:
+            text = resp.choices[0].message.content
+        except Exception:
+            try:
+                text = resp["choices"][0]["message"]["content"]
+            except Exception:
+                text = str(resp)
+
+        return (text or "").strip()
     except Exception as e:
         raise RuntimeError(f"Groq API error: {str(e)}")
 
