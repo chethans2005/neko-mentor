@@ -7,6 +7,7 @@ Provides a simple interface:
 
 import json
 import os
+from dotenv import load_dotenv
 from typing import Optional, Literal
 import requests
 from groq import Groq as GroqClient
@@ -15,6 +16,19 @@ from groq import Groq as GroqClient
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
+
+# Load .env files (try backend/config/.env first, then any .env in cwd)
+_THIS_DIR = os.path.dirname(__file__)
+_ROOT = os.path.abspath(os.path.join(_THIS_DIR, ".."))
+_ENV_PATHS = [
+    os.path.join(_ROOT, "config", ".env"),
+    os.path.join(os.getcwd(), ".env"),
+]
+for _p in _ENV_PATHS:
+    try:
+        load_dotenv(_p)
+    except Exception:
+        pass
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
@@ -154,24 +168,32 @@ def parse_json_response(text: str) -> dict:
         # Try direct parsing first
         return json.loads(text)
     except json.JSONDecodeError:
-        # Try to extract JSON-like content
-        # Look for {...} or [{...}]
-        text = text.strip()
-        if text.startswith("{"):
-            # Find matching closing brace
-            depth = 0
-            for i, char in enumerate(text):
-                if char == "{":
-                    depth += 1
-                elif char == "}":
-                    depth -= 1
-                    if depth == 0:
-                        try:
-                            return json.loads(text[: i + 1])
-                        except json.JSONDecodeError:
-                            pass
-                        break
-        
+        # Try to extract JSON-like content anywhere in the text by
+        # locating the first '{' and finding the matching '}' taking
+        # nesting into account.
+        s = text
+        start_idx = s.find("{")
+        if start_idx == -1:
+            return {}
+
+        depth = 0
+        for i in range(start_idx, len(s)):
+            c = s[i]
+            if c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0:
+                    candidate = s[start_idx : i + 1]
+                    try:
+                        return json.loads(candidate)
+                    except json.JSONDecodeError:
+                        # If parsing fails, continue searching for next '{'
+                        next_start = s.find("{", start_idx + 1)
+                        if next_start == -1:
+                            return {}
+                        start_idx = next_start
+                        depth = 0
         # Fallback: return empty dict
         return {}
 
