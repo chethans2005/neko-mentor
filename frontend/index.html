@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Vectorless Assistant — Frontend</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Vectorless System Design Assistant</h1>
+      <p class="tagline">Ask system-design questions — powered by a local LLM + tree KB</p>
+    </header>
+
+    <main>
+      <section class="query">
+        <textarea id="queryInput" placeholder="Ask a question (e.g. How does consistent hashing work?)"></textarea>
+        <div class="controls">
+          <label><input type="checkbox" id="debugToggle" /> Show debug</label>
+          <button id="askBtn">Ask</button>
+        </div>
+      </section>
+
+      <section id="results" class="results hidden">
+        <div id="meta" class="meta"></div>
+        <div id="answer" class="answer"></div>
+        <details id="debug" class="debug"><summary>Debug</summary><pre id="debugPre"></pre></details>
+      </section>
+
+      <aside class="history">
+        <h3>History</h3>
+        <ul id="historyList"></ul>
+      </aside>
+    </main>
+
+    <footer>
+      <small>Backend: <a href="../backend/src/main.py">backend/src/main.py</a> · KB: <a href="../shared/data/kb/knowledge_base.json">shared/data/kb/knowledge_base.json</a></small>
+    </footer>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
