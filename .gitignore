@@ -63,3 +63,13 @@ frontend/dist/
 # Misc
 *.pem
 *.key
+
+# Generated knowledge base and runtime data
+
+data/raw/
+data/raw/*.raw.txt
+data/progress/
+data/progress/*.json
+
+# Old debug folder
+debug_responses/
