@@ -158,8 +158,8 @@ Return: { answer, path, confidence, latency }
 ### For Groq (API, FREE tier)
 ```bash
 # 1. Get key: https://console.groq.com
-# 2. Set in .env or environment:
-export GROQ_API_KEY=gsk_...
+# 2. Set in `.env` or environment (do NOT commit your key):
+export GROQ_API_KEY=GROQ_YOUR_KEY
 # 3. Done!
 ```
 

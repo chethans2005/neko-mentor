@@ -118,7 +118,8 @@ OLLAMA_BASE_URL=http://localhost:11434
 **For Groq (API, free tier available):**
 ```
 LLM_PROVIDER=groq
-GROQ_API_KEY=gsk_your_key_here...
+# Set your real key in `backend/config/.env` (do not commit it)
+GROQ_API_KEY=GROQ_YOUR_KEY
 GROQ_MODEL=mixtral-8x7b-32768
 ```
 
