@@ -16,6 +16,7 @@ import argparse
 # Add backend/src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
+import asyncio
 from query_analyzer import analyze_query
 from navigator import navigate_tree, compute_confidence
 from answer_generator import generate_answer, extract_excerpt
@@ -73,11 +74,11 @@ def test_query(
     # Analyze query
     print("[1/3] Analyzing query...")
     try:
-        analysis = analyze_query(query, provider=provider, model=model)
+        analysis = asyncio.run(analyze_query(query, provider=provider, model=model))
         keywords = analysis.get("keywords", [])
         intent = analysis.get("intent", "unknown")
         domain = analysis.get("domain", "general")
-        
+
         print(f"  Intent: {intent}")
         print(f"  Domain: {domain}")
         print(f"  Keywords: {', '.join(keywords)}\n")
@@ -88,14 +89,16 @@ def test_query(
     # Navigate tree
     print("[2/3] Navigating knowledge tree...")
     try:
-        nav_result = navigate_tree(
-            query,
-            keywords,
-            root,
-            provider=provider,
-            model=model,
-            debug=debug,
-            deterministic=deterministic,
+        nav_result = asyncio.run(
+            navigate_tree(
+                query,
+                keywords,
+                root,
+                provider=provider,
+                model=model,
+                debug=debug,
+                deterministic=deterministic,
+            )
         )
         
         best_node = nav_result["best_node"]
@@ -118,12 +121,14 @@ def test_query(
         node_content = best_node.get("content", "")
         
         try:
-            answer = generate_answer(
-                query,
-                node_content,
-                path,
-                provider=provider,
-                model=model,
+            answer = asyncio.run(
+                generate_answer(
+                    query,
+                    node_content,
+                    path,
+                    provider=provider,
+                    model=model,
+                )
             )
             print(f"\n{answer}\n")
         except Exception as e:

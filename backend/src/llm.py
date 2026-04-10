@@ -12,6 +12,12 @@ import secrets_manager
 from typing import Optional, Literal
 import requests
 from groq import Groq as GroqClient
+import asyncio
+
+try:
+    import httpx
+except Exception:
+    httpx = None
 
 
 # ============================================================================
@@ -79,6 +85,32 @@ def call_ollama(prompt: str, model: str = DEFAULT_MODEL_OLLAMA) -> str:
         raise RuntimeError(f"Ollama API error: {str(e)}")
 
 
+async def call_ollama_async(prompt: str, model: str = DEFAULT_MODEL_OLLAMA) -> str:
+    """Async Ollama call using httpx. Falls back to sync `requests` if httpx
+    is unavailable by running the sync call in a thread.
+    """
+    if httpx is None:
+        # httpx not installed; run sync function in thread
+        return await asyncio.to_thread(call_ollama, prompt, model)
+
+    url = f"{OLLAMA_BASE_URL}/api/generate"
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(
+                url,
+                json={"model": model, "prompt": prompt, "stream": False},
+            )
+            resp.raise_for_status()
+            result = resp.json()
+            return result.get("response", "").strip()
+    except httpx.ConnectError:
+        raise RuntimeError(
+            f"Failed to connect to Ollama at {OLLAMA_BASE_URL}. Is Ollama running? (ollama serve)"
+        )
+    except Exception as e:
+        raise RuntimeError(f"Ollama API error: {str(e)}")
+
+
 # ============================================================================
 # GROQ CLIENT
 # ============================================================================
@@ -123,6 +155,13 @@ def call_groq(prompt: str, model: str = DEFAULT_MODEL_GROQ) -> str:
         raise RuntimeError(f"Groq API error: {str(e)}")
 
 
+async def call_groq_async(prompt: str, model: str = DEFAULT_MODEL_GROQ) -> str:
+    """Async wrapper for Groq client. The Groq Python client is synchronous,
+    so run it in a thread to avoid blocking the event loop.
+    """
+    return await asyncio.to_thread(call_groq, prompt, model)
+
+
 # ============================================================================
 # UNIFIED INTERFACE
 # ============================================================================
@@ -157,6 +196,29 @@ def call_llm(
         if model is None:
             model = DEFAULT_MODEL_GROQ
         return call_groq(prompt, model)
+    else:
+        raise ValueError(f"Unknown provider: {provider}")
+
+
+async def call_llm_async(
+    prompt: str,
+    model: Optional[str] = None,
+    provider: Optional[Literal["ollama", "groq"]] = None,
+) -> str:
+    """Async entrypoint for calling LLMs. Uses async HTTP for Ollama when
+    available and threads for sync clients otherwise.
+    """
+    if provider is None:
+        provider = DEFAULT_PROVIDER
+
+    if provider == "ollama":
+        if model is None:
+            model = DEFAULT_MODEL_OLLAMA
+        return await call_ollama_async(prompt, model)
+    elif provider == "groq":
+        if model is None:
+            model = DEFAULT_MODEL_GROQ
+        return await call_groq_async(prompt, model)
     else:
         raise ValueError(f"Unknown provider: {provider}")
 

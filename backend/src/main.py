@@ -20,7 +20,7 @@ from pydantic import BaseModel
 import sys
 sys.path.insert(0, os.path.dirname(__file__))
 
-from llm import call_llm
+from llm import call_llm_async
 from logging_config import configure_logging
 from middleware import register_tracing
 from query_analyzer import analyze_query
@@ -178,7 +178,7 @@ async def query_endpoint(req: QueryRequest):
     
     # Analyze query
     try:
-        analysis = analyze_query(query, provider=req.provider)
+        analysis = await analyze_query(query, provider=req.provider)
         keywords = analysis.get("keywords", [])
     except Exception as e:
         if DEBUG:
@@ -191,7 +191,7 @@ async def query_endpoint(req: QueryRequest):
         raise HTTPException(status_code=500, detail="KB root node not found")
     
     try:
-        nav_result = navigate_tree(
+        nav_result = await navigate_tree(
             query,
             keywords,
             root,
@@ -215,7 +215,7 @@ async def query_endpoint(req: QueryRequest):
     node_content = best_node.get("content", "")
     
     try:
-        answer = generate_answer(
+        answer = await generate_answer(
             query,
             node_content,
             path,

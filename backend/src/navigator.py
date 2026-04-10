@@ -12,7 +12,8 @@ Core logic:
 import json
 import os
 from typing import Optional, Tuple
-from llm import call_llm, parse_json_response
+from llm import call_llm_async, parse_json_response
+import asyncio
 
 
 # ============================================================================
@@ -110,7 +111,7 @@ def subtree_keyword_score(query_keywords: list, node: dict, max_depth: int = 2) 
 # LLM-GUIDED SCORING
 # ============================================================================
 
-def llm_score_children(
+async def llm_score_children(
     query: str,
     current_node_name: str,
     children: dict,
@@ -151,7 +152,8 @@ Example: {{\\"Network Design\\": 0.9, \\"Caching\\": 0.3}}
 
 Return valid JSON only, no markdown or explanation."""
 
-    response = call_llm(prompt, provider=provider, model=model)
+    # Call async LLM interface
+    response = await call_llm_async(prompt, provider=provider, model=model)
     scores = parse_json_response(response)
     
     # Validate: ensure all scores are between 0 and 1
@@ -209,7 +211,7 @@ def combine_scores(
 # TREE TRAVERSAL (DFS)
 # ============================================================================
 
-def navigate_tree(
+async def navigate_tree(
     query: str,
     query_keywords: list,
     root: dict,
@@ -268,7 +270,7 @@ def navigate_tree(
                 print("  Deterministic mode: using keyword-only scoring.")
         else:
             try:
-                llm_scores = llm_score_children(
+                llm_scores = await llm_score_children(
                     query, current_name, children, provider=provider, model=model
                 )
             except Exception as e:
@@ -395,28 +397,30 @@ if __name__ == "__main__":
     import sys
     sys.path.append("data/kb")
     
-    # Load KB
-    try:
-        kb_path = "shared/data/kb/knowledge_base.json"
-        if not os.path.exists(kb_path):
-            kb_path = "data/kb/knowledge_base.json"
+    async def _run():
+        try:
+            kb_path = "shared/data/kb/knowledge_base.json"
+            if not os.path.exists(kb_path):
+                kb_path = "data/kb/knowledge_base.json"
 
-        with open(kb_path, "r") as f:
-            kb_full = json.load(f)
-        
-        root = kb_full.get("System Design", {})
-        
-        query = "How does consistent hashing work?"
-        query_keywords = ["consistent", "hashing", "distributed"]
-        
-        print(f"Query: {query}")
-        print(f"Keywords: {query_keywords}\n")
-        
-        result = navigate_tree(query, query_keywords, root, debug=True)
-        print(f"\nBest node: {result['best_node_name']}")
-        print(f"Path: {' -> '.join(result['path'])}")
-        print(f"Score: {result['score']:.2f}")
-        print(f"Confidence: {compute_confidence(result['score'], result['depth']):.2f}")
-    
-    except FileNotFoundError:
-        print("KB file not found. Run from project root.")
+            with open(kb_path, "r") as f:
+                kb_full = json.load(f)
+
+            root = kb_full.get("System Design", {})
+
+            query = "How does consistent hashing work?"
+            query_keywords = ["consistent", "hashing", "distributed"]
+
+            print(f"Query: {query}")
+            print(f"Keywords: {query_keywords}\n")
+
+            result = await navigate_tree(query, query_keywords, root, debug=True)
+            print(f"\nBest node: {result['best_node_name']}")
+            print(f"Path: {' -> '.join(result['path'])}")
+            print(f"Score: {result['score']:.2f}")
+            print(f"Confidence: {compute_confidence(result['score'], result['depth']):.2f}")
+
+        except FileNotFoundError:
+            print("KB file not found. Run from project root.")
+
+    asyncio.run(_run())

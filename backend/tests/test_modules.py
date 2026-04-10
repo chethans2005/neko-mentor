@@ -22,6 +22,7 @@ import llm
 import query_analyzer
 import navigator
 import answer_generator
+import asyncio
 
 
 # ============================================================================
@@ -112,7 +113,7 @@ class TestQueryAnalyzer(unittest.TestCase):
         # Short words should be filtered
         self.assertNotIn("how", keywords)
     
-    @patch("query_analyzer.call_llm")
+    @patch("query_analyzer.call_llm_async")
     def test_analyze_query(self, mock_llm):
         """Test query analysis."""
         mock_llm.return_value = (
@@ -120,7 +121,7 @@ class TestQueryAnalyzer(unittest.TestCase):
             '"domain": "distributed-systems"}'
         )
         
-        result = query_analyzer.analyze_query("How does hashing work?")
+        result = asyncio.run(query_analyzer.analyze_query("How does hashing work?"))
         self.assertEqual(result["intent"], "understand")
         self.assertIn("hashing", result["keywords"])
 
@@ -197,17 +198,19 @@ class TestAnswerGenerator(unittest.TestCase):
         self.assertLess(len(excerpt), len(content))
         self.assertTrue(excerpt.endswith("...") or excerpt.endswith("."))
     
-    @patch("answer_generator.call_llm")
+    @patch("answer_generator.call_llm_async")
     def test_generate_answer(self, mock_llm):
         """Test answer generation."""
         mock_llm.return_value = "Test answer"
-        
-        answer = answer_generator.generate_answer(
-            "Test query",
-            "Test content",
-            ["System Design", "Caching"],
+
+        answer = asyncio.run(
+            answer_generator.generate_answer(
+                "Test query",
+                "Test content",
+                ["System Design", "Caching"],
+            )
         )
-        
+
         self.assertEqual(answer, "Test answer")
 
 
@@ -219,7 +222,7 @@ class TestIntegration(unittest.TestCase):
         self.kb = load_test_kb()
         self.root = self.kb["System Design"]
     
-    @patch("navigator.call_llm")
+    @patch("navigator.call_llm_async")
     def test_full_query_pipeline_keyword_only(self, mock_llm):
         """Test full pipeline with keyword-only scoring."""
         # Mock LLM to avoid external calls
@@ -227,11 +230,13 @@ class TestIntegration(unittest.TestCase):
         
         keywords = ["hashing", "consistent"]
         
-        result = navigator.navigate_tree(
-            "How does consistent hashing work?",
-            keywords,
-            self.root,
-            max_depth=3,
+        result = asyncio.run(
+            navigator.navigate_tree(
+                "How does consistent hashing work?",
+                keywords,
+                self.root,
+                max_depth=3,
+            )
         )
         
         # Should navigate to some node

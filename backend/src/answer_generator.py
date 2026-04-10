@@ -6,14 +6,15 @@ then asks an LLM to generate a comprehensive answer.
 """
 
 from typing import Optional
-from llm import call_llm
+from llm import call_llm_async
+import asyncio
 
 
 # ============================================================================
 # ANSWER GENERATION
 # ============================================================================
 
-def generate_answer(
+async def generate_answer(
     query: str,
     node_content: str,
     traversal_path: list,
@@ -50,7 +51,7 @@ Generate a clear, direct answer to the user's question using the provided conten
 Keep the answer concise (around {max_length} characters).
 If the content doesn't fully answer the question, provide your best explanation based on it."""
 
-    response = call_llm(prompt, provider=provider, model=model)
+    response = await call_llm_async(prompt, provider=provider, model=model)
     
     # Trim if too long
     if len(response) > max_length * 1.5:
@@ -59,7 +60,7 @@ If the content doesn't fully answer the question, provide your best explanation 
     return response.strip()
 
 
-def generate_summary(
+async def generate_summary(
     content: str,
     max_length: int = 500,
     provider: str = "ollama",
@@ -83,7 +84,7 @@ def generate_summary(
 
 Provide a concise summary highlighting the key points."""
 
-    response = call_llm(prompt, provider=provider, model=model)
+    response = await call_llm_async(prompt, provider=provider, model=model)
     
     if len(response) > max_length * 1.5:
         response = response[: max_length] + " ..."
@@ -130,17 +131,20 @@ stored on the server whose point is nearest to it on the ring. When a server is
 added or removed, only a fraction of keys need to be remapped, making it ideal
 for distributed caching and databases.
     """.strip()
-    
+
     test_query = "What is consistent hashing?"
     test_path = ["System Design", "Caching", "Consistent Hashing"]
-    
+
     print("Excerpt:")
     print(extract_excerpt(test_content, 200))
     print()
-    
-    print("Trying LLM-based summary...")
-    try:
-        summary = generate_summary(test_content, 200, provider="ollama")
-        print(f"Summary: {summary}")
-    except Exception as e:
-        print(f"Error: {e}")
+
+    async def _run():
+        print("Trying LLM-based summary...")
+        try:
+            summary = await generate_summary(test_content, 200, provider="ollama")
+            print(f"Summary: {summary}")
+        except Exception as e:
+            print(f"Error: {e}")
+
+    asyncio.run(_run())

@@ -7,14 +7,15 @@ Extracts intent, keywords, and domain from user queries.
 import json
 import re
 from typing import Optional
-from llm import call_llm, parse_json_response
+from llm import call_llm_async, parse_json_response
+import asyncio
 
 
 # ============================================================================
 # QUERY ANALYZER
 # ============================================================================
 
-def analyze_query(
+async def analyze_query(
     query: str,
     provider: str = "ollama",
     model: Optional[str] = None,
@@ -45,7 +46,7 @@ Return a JSON object with these fields:
 Return ONLY valid JSON, no markdown, no explanation."""
 
     try:
-        response = call_llm(prompt, provider=provider, model=model)
+        response = await call_llm_async(prompt, provider=provider, model=model)
         result = parse_json_response(response)
     except Exception:
         # Graceful fallback when provider is unavailable.
@@ -112,11 +113,14 @@ if __name__ == "__main__":
         "What's the difference between FIFO and LIFO queues?",
         "How does database sharding work?",
     ]
-    
-    for q in test_queries:
-        print(f"\nQuery: {q}")
-        try:
-            analysis = analyze_query(q, provider="ollama")
-            print(f"Analysis: {json.dumps(analysis, indent=2)}")
-        except Exception as e:
-            print(f"Error: {e}")
+
+    async def _run_tests():
+        for q in test_queries:
+            print(f"\nQuery: {q}")
+            try:
+                analysis = await analyze_query(q, provider="ollama")
+                print(f"Analysis: {json.dumps(analysis, indent=2)}")
+            except Exception as e:
+                print(f"Error: {e}")
+
+    asyncio.run(_run_tests())
