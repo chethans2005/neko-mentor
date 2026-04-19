@@ -19,6 +19,14 @@ try:
 except Exception:
     httpx = None
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Retry/backoff configuration
+LLM_RETRIES = int(os.getenv("LLM_RETRIES", "2"))
+LLM_BACKOFF = float(os.getenv("LLM_BACKOFF", "0.5"))
+
 
 # ============================================================================
 # CONFIGURATION
@@ -58,26 +66,31 @@ def call_ollama(prompt: str, model: str = DEFAULT_MODEL_OLLAMA) -> str:
     Returns:
         The model's response as a string.
     
-    Raises:
-        RuntimeError: If Ollama is not accessible.
-    """
-    url = f"{OLLAMA_BASE_URL}/api/generate"
-    
-    try:
-        response = requests.post(
-            url,
-            json={
-                "model": model,
-                "prompt": prompt,
-                "stream": False,
-            },
-            timeout=60,
-        )
-        response.raise_for_status()
-        result = response.json()
-        return result.get("response", "").strip()
-    except requests.exceptions.ConnectionError:
-        raise RuntimeError(
+    last_exc = None
+    for attempt in range(LLM_RETRIES + 1):
+        try:
+            response = requests.post(
+                url,
+                json={"model": model, "prompt": prompt, "stream": False},
+                timeout=60,
+            )
+            response.raise_for_status()
+            result = response.json()
+            return result.get("response", "").strip()
+        except requests.exceptions.ConnectionError as e:
+            last_exc = e
+            logger.warning("Ollama connection error (attempt %d/%d): %s", attempt + 1, LLM_RETRIES + 1, e)
+        except Exception as e:
+            last_exc = e
+            logger.warning("Ollama API error (attempt %d/%d): %s", attempt + 1, LLM_RETRIES + 1, e)
+
+        # Backoff before next attempt
+        if attempt < LLM_RETRIES:
+            backoff = LLM_BACKOFF * (2 ** attempt)
+            time.sleep(backoff)
+
+    # If we reach here, all attempts failed
+    raise RuntimeError(f"Ollama API error after retries: {last_exc}")
             f"Failed to connect to Ollama at {OLLAMA_BASE_URL}. "
             "Is Ollama running? (ollama serve)"
         )
@@ -93,22 +106,30 @@ async def call_ollama_async(prompt: str, model: str = DEFAULT_MODEL_OLLAMA) -> s
         # httpx not installed; run sync function in thread
         return await asyncio.to_thread(call_ollama, prompt, model)
 
+    last_exc = None
     url = f"{OLLAMA_BASE_URL}/api/generate"
-    try:
-        async with httpx.AsyncClient(timeout=60) as client:
-            resp = await client.post(
-                url,
-                json={"model": model, "prompt": prompt, "stream": False},
-            )
-            resp.raise_for_status()
-            result = resp.json()
-            return result.get("response", "").strip()
-    except httpx.ConnectError:
-        raise RuntimeError(
-            f"Failed to connect to Ollama at {OLLAMA_BASE_URL}. Is Ollama running? (ollama serve)"
-        )
-    except Exception as e:
-        raise RuntimeError(f"Ollama API error: {str(e)}")
+    for attempt in range(LLM_RETRIES + 1):
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                resp = await client.post(
+                    url,
+                    json={"model": model, "prompt": prompt, "stream": False},
+                )
+                resp.raise_for_status()
+                result = resp.json()
+                return result.get("response", "").strip()
+        except httpx.ConnectError as e:
+            last_exc = e
+            logger.warning("Async Ollama connection error (attempt %d/%d): %s", attempt + 1, LLM_RETRIES + 1, e)
+        except Exception as e:
+            last_exc = e
+            logger.warning("Async Ollama API error (attempt %d/%d): %s", attempt + 1, LLM_RETRIES + 1, e)
+
+        if attempt < LLM_RETRIES:
+            backoff = LLM_BACKOFF * (2 ** attempt)
+            await asyncio.sleep(backoff)
+
+    raise RuntimeError(f"Ollama API error after retries: {last_exc}")
 
 
 # ============================================================================
@@ -131,34 +152,44 @@ def call_groq(prompt: str, model: str = DEFAULT_MODEL_GROQ) -> str:
     """
     # Retrieve API key from secret provider (env or backend/config/.env)
     api_key = secrets_manager.get_secret("GROQ_API_KEY", required=True)
-    try:
-        client = GroqClient(api_key=api_key)
-        # Use the Chat Completions endpoint available on the Groq client
-        resp = client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.0,
-            max_completion_tokens=2048,
-        )
-
-        # Defensive extraction of the returned text
+    last_exc = None
+    for attempt in range(LLM_RETRIES + 1):
         try:
-            text = resp.choices[0].message.content
-        except Exception:
-            try:
-                text = resp["choices"][0]["message"]["content"]
-            except Exception:
-                text = str(resp)
+            client = GroqClient(api_key=api_key)
+            # Use the Chat Completions endpoint available on the Groq client
+            resp = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.0,
+                max_completion_tokens=2048,
+            )
 
-        return (text or "").strip()
-    except Exception as e:
-        raise RuntimeError(f"Groq API error: {str(e)}")
+            # Defensive extraction of the returned text
+            try:
+                text = resp.choices[0].message.content
+            except Exception:
+                try:
+                    text = resp["choices"][0]["message"]["content"]
+                except Exception:
+                    text = str(resp)
+
+            return (text or "").strip()
+        except Exception as e:
+            last_exc = e
+            logger.warning("Groq API error (attempt %d/%d): %s", attempt + 1, LLM_RETRIES + 1, e)
+
+        if attempt < LLM_RETRIES:
+            backoff = LLM_BACKOFF * (2 ** attempt)
+            time.sleep(backoff)
+
+    raise RuntimeError(f"Groq API error after retries: {last_exc}")
 
 
 async def call_groq_async(prompt: str, model: str = DEFAULT_MODEL_GROQ) -> str:
     """Async wrapper for Groq client. The Groq Python client is synchronous,
     so run it in a thread to avoid blocking the event loop.
     """
+    # Run sync Groq client in thread with retry already applied in call_groq
     return await asyncio.to_thread(call_groq, prompt, model)
 
 

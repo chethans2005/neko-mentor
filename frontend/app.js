@@ -9,8 +9,15 @@ const debugEl = document.getElementById("debug");
 const debugPre = document.getElementById("debugPre");
 const historyList = document.getElementById("historyList");
 const debugToggle = document.getElementById("debugToggle");
+const providerSelect = document.getElementById("providerSelect");
+const modelInput = document.getElementById("modelInput");
+const clearBtn = document.getElementById("clearBtn");
 
+const MAX_HIST = 30;
+
+// history persisted in localStorage
 let history = [];
+try{ history = JSON.parse(localStorage.getItem('vl_history')||'[]'); }catch(e){ history = []; }
 
 function showLoading() {
   answerEl.textContent = "Thinking...";
@@ -29,8 +36,13 @@ function renderHistory(){
   historyList.innerHTML = "";
   history.slice().reverse().forEach((h)=>{
     const li = document.createElement('li');
-    li.textContent = h.query;
-    li.onclick = ()=>{ qInput.value = h.query; answerEl.textContent = h.answer; results.classList.remove('hidden'); }
+    li.textContent = `${new Date(h.ts||Date.now()).toLocaleTimeString()} — ${h.query}`;
+    li.onclick = ()=>{
+      qInput.value = h.query;
+      answerEl.textContent = h.answer;
+      metaEl.textContent = `Path: ${ (h.path||[]).join(' > ') }`;
+      results.classList.remove('hidden');
+    }
     historyList.appendChild(li);
   });
 }
@@ -40,18 +52,26 @@ askBtn.addEventListener('click', async () => {
   if(!query) return;
   showLoading();
 
+  const body = { query, provider: providerSelect.value };
+  if(modelInput.value.trim()) body.model = modelInput.value.trim();
+  const url = debugToggle.checked ? `${API_URL}/debug` : API_URL;
+
+  const start = Date.now();
   try{
-    const body = { query };
-    const res = await fetch(API_URL, {
-      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    const res = await fetch(url, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body),
     });
-    if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    if(!res.ok){
+      const txt = await res.text().catch(()=>res.statusText);
+      throw new Error(`${res.status} ${res.statusText} - ${txt}`);
+    }
     const data = await res.json();
+    const took = Date.now() - start;
 
     answerEl.textContent = data.answer || '(no answer)';
-    metaEl.textContent = `Path: ${ (data.path||[]).join(' > ') } · Confidence: ${ (data.confidence||0).toFixed(2) }`;
+    metaEl.textContent = `Path: ${ (data.path||[]).join(' > ') } · Confidence: ${ (data.confidence||0).toFixed(2) } · ${took}ms`;
 
-    if(debugToggle.checked && data.traversal_path){
+    if(debugToggle.checked){
       debugPre.textContent = JSON.stringify(data, null, 2);
       debugEl.style.display = 'block';
     } else {
@@ -59,7 +79,9 @@ askBtn.addEventListener('click', async () => {
       debugEl.style.display = 'none';
     }
 
-    history.push({ query, answer: data.answer||'' });
+    history.push({ query, answer: data.answer||'', path: data.path||[], ts: Date.now() });
+    if(history.length>MAX_HIST) history.shift();
+    localStorage.setItem('vl_history', JSON.stringify(history));
     renderHistory();
   }catch(e){
     showError(e.message);
@@ -75,3 +97,11 @@ qInput.addEventListener('keydown', (ev)=>{
 
 // Initial render
 renderHistory();
+
+clearBtn.addEventListener('click', ()=>{
+  qInput.value = '';
+  answerEl.textContent = '';
+  metaEl.textContent = '';
+  debugPre.textContent = '';
+  results.classList.add('hidden');
+});

@@ -38,7 +38,7 @@ async def generate_answer(
     """
     path_str = " > ".join(traversal_path)
     
-    prompt = f"""You are a system design expert. Answer the user's question based on the provided knowledge base content.
+    prompt = f"""You are a careful system design expert. Use ONLY the Relevant Content below to answer the user's question.
 
 User Question: "{query}"
 
@@ -47,9 +47,14 @@ Knowledge Base Path: {path_str}
 Relevant Content:
 {node_content}
 
-Generate a clear, direct answer to the user's question using the provided content.
-Keep the answer concise (around {max_length} characters).
-If the content doesn't fully answer the question, provide your best explanation based on it."""
+Instructions:
+- Base your answer only on the Relevant Content. Do not invent facts.
+- If the content is insufficient to fully answer, first say: "I don't have enough information in the KB to fully answer, but here is a best-effort explanation:" and then provide a concise best-effort answer.
+- Keep the answer concise (around {max_length} characters).
+- At the end, add a short "Sources:" line listing the Knowledge Base Path.
+- If you must make assumptions, label them as "(assumption)".
+
+Now produce the answer as plain text (no JSON, no markdown)."""
 
     response = await call_llm_async(prompt, provider=provider, model=model)
     
