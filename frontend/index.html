@@ -17,8 +17,20 @@
       <section class="query">
         <textarea id="queryInput" placeholder="Ask a question (e.g. How does consistent hashing work?)"></textarea>
         <div class="controls">
-          <label><input type="checkbox" id="debugToggle" /> Show debug</label>
-          <button id="askBtn">Ask</button>
+          <div class="left-controls">
+            <label>Provider:
+              <select id="providerSelect">
+                <option value="ollama">ollama (local)</option>
+                <option value="groq">groq (cloud)</option>
+              </select>
+            </label>
+            <label>Model: <input id="modelInput" placeholder="optional model name" /></label>
+            <label class="debug-label"><input type="checkbox" id="debugToggle" /> Show debug</label>
+          </div>
+          <div class="right-controls">
+            <button id="clearBtn" class="muted">Clear</button>
+            <button id="askBtn">Ask</button>
+          </div>
         </div>
       </section>
 
